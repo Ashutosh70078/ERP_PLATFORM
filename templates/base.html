@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NIET Campus ERP | Official Portal{% endblock %}</title>
+    <meta name="description" content="Official NIET Campus ERP Portal for students, faculty and staff. Access attendance, examinations, academics, timetable and fee receipts.">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/niet_logo.png') }}">
+    <!-- Google Fonts & Main Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-grid-pattern">
+
+    <!-- STICKY NAVBAR -->
+    <header class="niet-header">
+        <div class="nav-container">
+            <div class="brand-section">
+                <a href="{{ url_for('index') }}" class="logo-container">
+                    <img src="{{ url_for('static', filename='images/niet_logo.png') }}" alt="NIET Greater Noida Logo" style="height: 44px; object-fit: contain;">
+                    <div class="brand-title">
+                        <h1>NIET CAMPUS ERP</h1>
+                        <span>Student & Faculty Portal</span>
+                    </div>
+                </a>
+            </div>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+                    <li><a href="{{ url_for('index') }}#modules" class="nav-link">Modules</a></li>
+                    <li><a href="{{ url_for('index') }}#why-erp" class="nav-link">Why ERP</a></li>
+                    
+                    {% if session.get('role') == 'student' %}
+                        <li><a href="{{ url_for('student_dashboard') }}" class="nav-link">Student Portal</a></li>
+                    {% elif session.get('role') == 'faculty' %}
+                        <li><a href="{{ url_for('faculty_dashboard') }}" class="nav-link">Faculty Portal</a></li>
+                    {% elif session.get('role') == 'admin' %}
+                        <li><a href="{{ url_for('admin_dashboard') }}" class="nav-link">Admin Console</a></li>
+                    {% endif %}
+
+                    {% if session.get('user') %}
+                        <li class="user-badge">
+                            👤 {{ session.get('user') }} ({{ session.get('role')|capitalize }})
+                        </li>
+                        <li><a href="{{ url_for('logout') }}" class="btn-logout">Logout</a></li>
+                    {% else %}
+                        <li>
+                            <a href="{{ url_for('login') }}" class="btn-hero-gold" style="padding: 0.45rem 1.15rem; font-size: 0.85rem;">
+                                🔐 Login to ERP
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- FLASH MESSAGES (SUCCESS, ERROR, WARNING) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alert-container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <span>{{ message }}</span>
+              <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; cursor:pointer; font-weight:bold; font-size:1.1rem; color:inherit;">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- MAIN PAGE CONTENT -->
+    <main class="main-wrapper">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="niet-footer">
+        <div class="footer-top-grid">
+            <div class="footer-col">
+                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                    <img src="{{ url_for('static', filename='images/niet_logo.png') }}" alt="NIET Logo" style="height:40px; background:#fff; padding:3px; border-radius:6px;">
+                    <h4 style="margin:0; border:none; padding:0;">NIET Greater Noida</h4>
+                </div>
+                <p style="font-size: 0.84rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 0.75rem;">
+                    Noida Institute of Engineering and Technology (NIET) is an Autonomous Educational Institution in Greater Noida.
+                </p>
+                <div class="pill pill-gold" style="font-size: 0.75rem;">Autonomous Institute • AKTU Affiliated</div>
+            </div>
+
+            <div class="footer-col">
+                <h4>Quick Portal Links</h4>
+                <ul>
+                    <li><a href="{{ url_for('login') }}?role=student">👨‍🎓 Student Attendance & Results</a></li>
+                    <li><a href="{{ url_for('login') }}?role=faculty">👨‍🏫 Faculty Attendance Register</a></li>
+                    <li><a href="{{ url_for('login') }}?role=admin">🏛️ Administrator Console</a></li>
+                    <li><a href="{{ url_for('student_dashboard') }}">💳 Fee Payment & E-Receipts</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Department & Academic Info</h4>
+                <p style="font-size: 0.84rem; color: #cbd5e1; line-height: 1.6;">
+                    <strong>Department:</strong> Artificial Intelligence & CSE<br>
+                    <strong>Program:</strong> B.Tech (3rd Semester, Batch C)<br>
+                    <strong>Academic Year:</strong> 2026-2027<br>
+                    <strong>Campus:</strong> Knowledge Park-II, Greater Noida
+                </p>
+            </div>
+
+            <div class="footer-col">
+                <h4>Campus Support</h4>
+                <p style="font-size: 0.84rem; color: #cbd5e1; line-height: 1.6;">
+                    📍 19, Knowledge Park-II, Institutional Area, Greater Noida, U.P. 201306<br>
+                    ✉️ erp.support@niet.co.in<br>
+                    📞 Helpline: +91-120-2328131
+                </p>
+                <ul class="social-icons">
+                    <li><a href="#" title="Facebook">f</a></li>
+                    <li><a href="#" title="Twitter">t</a></li>
+                    <li><a href="#" title="Instagram">in</a></li>
+                    <li><a href="#" title="LinkedIn">li</a></li>
+                    <li><a href="#" title="YouTube">yt</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p style="color: #94a3b8; font-size: 0.8rem;">
+                © 2026 Noida Institute of Engineering and Technology (NIET). All Rights Reserved. • Powered by Smart ERP System
+            </p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

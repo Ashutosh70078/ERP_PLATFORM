@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}NIET Campus ERP | Official Academic Portal{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="hero-wrapper" id="home">
+    <div class="hero-grid">
+        <!-- Left: Headline & CTAs -->
+        <div class="hero-text">
+            <div style="display:inline-flex; align-items:center; gap:0.5rem; background:#eff6ff; color:var(--brand-primary); padding:0.35rem 0.85rem; border-radius:20px; font-size:0.8rem; font-weight:700; border:1px solid #bfdbfe; margin-bottom:1rem;">
+                <span>🎓 Official University ERP Portal • Greater Noida</span>
+            </div>
+
+            <h1>
+                One Digital Platform for the Entire <span class="gradient-text">NIET Campus</span>
+            </h1>
+
+            <p>
+                A unified campus management platform for students, faculty and management. Access real-time attendance, sessional examination results, class timetables, fee receipts and academic services from one portal.
+            </p>
+
+            <div class="hero-cta-group">
+                <a href="{{ url_for('login') }}" class="btn-hero-gold">
+                    <span>Login to ERP Portal</span>
+                    <span>&rarr;</span>
+                </a>
+                <a href="#modules" class="btn-hero-secondary">
+                    <span>Explore ERP Modules</span>
+                </a>
+            </div>
+
+            <!-- Trust Badges -->
+            <div class="trust-badges">
+                <div class="trust-badge-item">
+                    <span style="color:#10b981; font-weight:bold;">✓</span>
+                    <span>Single Sign-On (SSO)</span>
+                </div>
+                <div class="trust-badge-item">
+                    <span style="color:var(--brand-primary); font-weight:bold;">🛡️</span>
+                    <span>256-bit Encrypted Security</span>
+                </div>
+                <div class="trust-badge-item">
+                    <span style="color:var(--brand-gold); font-weight:bold;">⚡</span>
+                    <span>24x7 High Availability</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Modern Portal Preview Mockup (Clean Student Preview) -->
+        <div class="mockup-window">
+            <div class="mockup-bar">
+                <div class="dots">
+                    <div class="dot dot-red"></div>
+                    <div class="dot dot-yellow"></div>
+                    <div class="dot dot-green"></div>
+                </div>
+                <span class="mockup-url">nietcloud.niet.co.in/erp</span>
+                <span class="badge badge-paid" style="font-size:0.7rem;">
+                    <span class="pill-pulse" style="width:6px; height:6px; background:#10b981;"></span>
+                    Portal Active
+                </span>
+            </div>
+
+            <!-- Header Card Mockup -->
+            <div class="mockup-header-banner">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <img src="{{ url_for('static', filename='images/niet_logo.png') }}" alt="Logo" style="height:36px; background:#fff; padding:2px; border-radius:6px;">
+                    <div>
+                        <h4 style="font-size:0.95rem; font-weight:800; color:#fff;">Student Academic Portal</h4>
+                        <p style="font-size:0.75rem; color:#cbd5e1;">B.Tech Computer Science & AI • 3rd Semester</p>
+                    </div>
+                </div>
+                <span class="badge badge-paid" style="font-size:0.72rem;">Verified</span>
+            </div>
+
+            <!-- Live KPI Row -->
+            <div class="mockup-stats-row">
+                <div class="mockup-stat-cell">
+                    <span>Attendance Status</span>
+                    <h4 style="color:#166534;">86.5% (Eligible)</h4>
+                </div>
+                <div class="mockup-stat-cell">
+                    <span>Cumulative CGPA</span>
+                    <h4 style="color:var(--brand-primary);">8.92 CGPA</h4>
+                </div>
+                <div class="mockup-stat-cell">
+                    <span>Semester Fee</span>
+                    <h4 style="color:#166534;">Paid (₹82,500)</h4>
+                </div>
+                <div class="mockup-stat-cell">
+                    <span>Current Section</span>
+                    <h4 style="color:var(--brand-dark);">Batch C (302)</h4>
+                </div>
+            </div>
+
+            <!-- Quick Launch Bar -->
+            <div style="display:flex; gap:0.5rem;">
+                <a href="{{ url_for('login') }}?role=student" class="btn btn-primary btn-sm" style="flex:1;">
+                    Student Sign In &rarr;
+                </a>
+                <a href="{{ url_for('login') }}?role=faculty" class="btn btn-secondary btn-sm" style="flex:1;">
+                    Faculty Sign In &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SYSTEM STATS COUNTERS -->
+<div class="stats-grid">
+    <div class="stat-box">
+        <div class="stat-icon">👨‍🎓</div>
+        <div class="stat-info">
+            <h4>Enrolled Students</h4>
+            <p>{{ stats.total_students }}</p>
+        </div>
+    </div>
+    <div class="stat-box success">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+            <h4>Average Attendance</h4>
+            <p>{{ stats.avg_attendance }}%</p>
+        </div>
+    </div>
+    <div class="stat-box warning">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-info">
+            <h4>Shortage Alerts (<75%)</h4>
+            <p>{{ stats.attendance_shortage_count }}</p>
+        </div>
+    </div>
+    <div class="stat-box gold">
+        <div class="stat-icon">📢</div>
+        <div class="stat-info">
+            <h4>Campus Circulars</h4>
+            <p>{{ stats.total_notices }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- KEY ERP MODULES SECTION -->
+<section id="modules" style="margin-bottom: 2.5rem;">
+    <div class="card-header" style="border-bottom:none; margin-bottom:0.75rem;">
+        <div>
+            <h2>Integrated Campus ERP Modules</h2>
+            <p style="font-size:0.88rem; color:var(--text-slate);">Core institutional services accessible to students, faculty, and administrative staff</p>
+        </div>
+        <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm">Access Portal &rarr;</a>
+    </div>
+
+    <div class="role-cards-grid">
+        <!-- 1. STUDENT MODULE -->
+        <div class="role-card">
+            <div>
+                <div class="role-icon">👨‍🎓</div>
+                <h3>Student Portal</h3>
+                <p>Track attendance with mandatory 75% rule alerts, inspect sessional marks, view weekly lecture timetable, and download verified fee receipts.</p>
+                <div class="credentials-box">
+                    <strong>Demo Student Roll:</strong> <code>0261dcsa007</code><br>
+                    <strong>Password:</strong> <code>student123</code>
+                </div>
+            </div>
+            <a href="{{ url_for('login') }}?role=student&user=0261dcsa007" class="btn btn-primary" style="width:100%;">
+                Student Sign In &rarr;
+            </a>
+        </div>
+
+        <!-- 2. FACULTY MODULE -->
+        <div class="role-card">
+            <div>
+                <div class="role-icon">👨‍🏫</div>
+                <h3>Faculty & Staff Portal</h3>
+                <p>One-click attendance marking register for assigned batches, record sessional examination marks, and manage daily lecture slots.</p>
+                <div class="credentials-box">
+                    <strong>Faculty ID:</strong> <code>faculty</code> (Mr. Praveen Kr Tomar)<br>
+                    <strong>Password:</strong> <code>fac123</code>
+                </div>
+            </div>
+            <a href="{{ url_for('login') }}?role=faculty&user=faculty" class="btn btn-secondary" style="width:100%;">
+                Faculty Sign In &rarr;
+            </a>
+        </div>
+
+        <!-- 3. ADMIN MODULE -->
+        <div class="role-card">
+            <div>
+                <div class="role-icon">🏛️</div>
+                <h3>Administrator Console</h3>
+                <p>Institutional student records directory, publish campus-wide circulars, manage course allocation, and review student service requests.</p>
+                <div class="credentials-box">
+                    <strong>Admin Username:</strong> <code>admin</code><br>
+                    <strong>Password:</strong> <code>admin123</code>
+                </div>
+            </div>
+            <a href="{{ url_for('login') }}?role=admin&user=admin" class="btn btn-primary" style="background:var(--brand-dark); width:100%;">
+                Admin Console &rarr;
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- WHY NIET ERP SECTION -->
+<section id="why-erp" class="card" style="border-left: 6px solid var(--brand-primary); margin-bottom: 2.5rem;">
+    <div class="card-header" style="border-bottom: none; margin-bottom: 0.5rem;">
+        <div>
+            <h3 style="color: var(--brand-dark); font-size: 1.25rem;">
+                🌟 Key Advantages of NIET Smart ERP
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Built to streamline university operations and ensure academic transparency
+            </p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-top: 0.5rem;">
+        <div style="background:var(--bg-slate); padding:1.25rem; border-radius:10px; border:1px solid var(--border-light);">
+            <div style="font-size:1.5rem; margin-bottom:0.5rem;">📊</div>
+            <h4 style="color:var(--brand-primary); font-size: 0.95rem; margin-bottom:0.3rem;">75% Attendance Compliance</h4>
+            <p style="font-size:0.84rem; color:var(--text-slate); line-height:1.5;">
+                Automated attendance calculations with visual warning indicators ensuring students maintain AKTU & NIET eligibility for exams.
+            </p>
+        </div>
+
+        <div style="background:var(--bg-slate); padding:1.25rem; border-radius:10px; border:1px solid var(--border-light);">
+            <div style="font-size:1.5rem; margin-bottom:0.5rem;">📝</div>
+            <h4 style="color:var(--brand-primary); font-size: 0.95rem; margin-bottom:0.3rem;">Examination & Sessional Records</h4>
+            <p style="font-size:0.84rem; color:var(--text-slate); line-height:1.5;">
+                Centralized recording of Sessional-1 and Sessional-2 marks, internal assessments, and cumulative CGPA progress tracking.
+            </p>
+        </div>
+
+        <div style="background:var(--bg-slate); padding:1.25rem; border-radius:10px; border:1px solid var(--border-light);">
+            <div style="font-size:1.5rem; margin-bottom:0.5rem;">💳</div>
+            <h4 style="color:var(--brand-primary); font-size: 0.95rem; margin-bottom:0.3rem;">Fee Verification & E-Receipts</h4>
+            <p style="font-size:0.84rem; color:var(--text-slate); line-height:1.5;">
+                Transparent fee records, outstanding balance tracking, and instant generation of printable verified university fee receipts.
+            </p>
+        </div>
+
+        <div style="background:var(--bg-slate); padding:1.25rem; border-radius:10px; border:1px solid var(--border-light);">
+            <div style="font-size:1.5rem; margin-bottom:0.5rem;">📚</div>
+            <h4 style="color:var(--brand-primary); font-size: 0.95rem; margin-bottom:0.3rem;">Central Library Catalog</h4>
+            <p style="font-size:0.84rem; color:var(--text-slate); line-height:1.5;">
+                Live catalog search for textbook availability, tracking issued books, return due dates, and digital book reservation.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- RECENT CAMPUS NOTICES & CIRCULARS -->
+<div class="card" style="margin-bottom: 2.5rem;">
+    <div class="card-header">
+        <h3>📢 Recent Campus Notices & Circulars</h3>
+        <span class="badge badge-paid">Official Board</span>
+    </div>
+    <div class="table-responsive">
+        <table class="niet-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Circular Title</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notice in notices %}
+                <tr>
+                    <td style="white-space:nowrap; font-weight:700;">{{ notice.date }}</td>
+                    <td>
+                        <span class="badge {% if notice.pinned %}badge-danger{% else %}badge-pending{% endif %}">
+                            {{ notice.category }}
+                        </span>
+                    </td>
+                    <td style="font-weight:700; color:var(--brand-dark);">{{ notice.title }}</td>
+                    <td style="color:var(--text-slate); font-size:0.85rem;">{{ notice.content }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

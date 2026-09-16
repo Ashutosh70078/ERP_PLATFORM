@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}OS Internals & Concepts - CCSE0353A{% endblock %}
+
+{% block content %}
+<!-- OS MODULE HEADER BANNER -->
+<div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, var(--primary-dark) 100%); color: #fff; padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span class="hero-tag" style="background: rgba(234, 179, 8, 0.25); color: #fde047; border: 1px solid #fde047;">
+                OPERATING SYSTEMS (CCSE0353A) CAPSTONE DEMO
+            </span>
+            <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0.5rem 0 0.25rem 0; color: #fff;">
+                System Internals & OS Concept Mapping
+            </h2>
+            <p style="color: #cbd5e1; font-size: 0.9rem; max-width: 800px;">
+                Demonstrating real OS principles inside the University ERP Platform as evaluated by <strong>Mr. Praveen Kr Tomar</strong>.
+                Explore live simulations of CPU Scheduling, Mutex Critical Section Locks, LRU Memory Paging, and Access Control.
+            </p>
+        </div>
+        <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); text-align: right;">
+            <p style="font-size: 0.8rem; color: #94a3b8;">Capstone Group</p>
+            <p style="font-size: 1.1rem; font-weight: 700; color: #eab308;">Team 52 (Batch C)</p>
+            <p style="font-size: 0.75rem; color: #cbd5e1;">B.Tech CSE (AI) • 3rd Semester</p>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 1: CPU SCHEDULING (PREETY KUMARI & KRISH KUMAR) -->
+<div class="card" style="border-top: 5px solid var(--accent-gold);">
+    <div class="card-header">
+        <div>
+            <h3 style="color: var(--secondary);">
+                ⚙️ 1. Process Management & CPU Scheduling (Preety Kumari & Krish Kumar)
+            </h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Student ERP service requests (Bonafide, Leave) enter a real OS queue and are scheduled via <strong>FCFS</strong> and <strong>Round Robin</strong>.
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <label for="quantumSelect" style="font-size: 0.85rem; font-weight: 600;">Time Quantum (RR):</label>
+            <form action="{{ url_for('os_monitor') }}" method="GET" style="display:flex; gap:0.4rem;">
+                <select name="quantum" id="quantumSelect" class="form-control" style="width: 70px; padding: 0.25rem 0.5rem;" onchange="this.form.submit()">
+                    <option value="2" {% if quantum == 2 %}selected{% endif %}>2</option>
+                    <option value="3" {% if quantum == 3 %}selected{% endif %}>3</option>
+                    <option value="4" {% if quantum == 4 %}selected{% endif %}>4</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCHEDULING TABS -->
+    <div class="tabs-container">
+        <div class="tabs-header">
+            <button class="tab-btn active" data-tab="tabFCFS">Algorithm A: First-Come, First-Served (FCFS)</button>
+            <button class="tab-btn" data-tab="tabRR">Algorithm B: Round Robin (Time Quantum = {{ quantum }})</button>
+        </div>
+
+        <!-- FCFS VIEW -->
+        <div class="tab-pane active" id="tabFCFS">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Visual Gantt Chart (FCFS Timeline):</h4>
+            <div class="gantt-chart">
+                {% for block in fcfs.gantt %}
+                <div class="gantt-block" style="flex: {{ block.end - block.start }}; background: linear-gradient(135deg, #1e293b, #334155);" title="{{ block.title }}">
+                    <span>{{ block.pid }}</span>
+                    <span class="time-marker">{{ block.end }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- FCFS Table -->
+            <div class="table-responsive" style="margin-top: 1rem;">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Process ID</th>
+                            <th>Request Job Description</th>
+                            <th>Arrival Time (AT)</th>
+                            <th>Burst Time (BT)</th>
+                            <th>Completion Time (CT)</th>
+                            <th>Turnaround Time (TAT)</th>
+                            <th>Waiting Time (WT)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in fcfs.schedule %}
+                        <tr>
+                            <td><code>{{ p.pid }}</code></td>
+                            <td style="font-weight: 600;">{{ p.title }}</td>
+                            <td>{{ p.at }} ms</td>
+                            <td>{{ p.bt }} ms</td>
+                            <td>{{ p.ct }} ms</td>
+                            <td><strong>{{ p.tat }} ms</strong></td>
+                            <td><strong>{{ p.wt }} ms</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: var(--bg-card-alt); font-weight: 700;">
+                            <td colspan="5" style="text-align: right;">Average Metrics:</td>
+                            <td style="color: var(--primary);">Avg TAT = {{ fcfs.avg_tat }} ms</td>
+                            <td style="color: var(--success);">Avg WT = {{ fcfs.avg_wt }} ms</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- ROUND ROBIN VIEW -->
+        <div class="tab-pane" id="tabRR">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Preemptive Gantt Chart (Round Robin with q={{ quantum }}):</h4>
+            <div class="gantt-chart">
+                {% for block in rr.gantt %}
+                <div class="gantt-block" style="flex: {{ block.end - block.start }}; background: linear-gradient(135deg, #0284c7, #0369a1);" title="{{ block.title }}">
+                    <span>{{ block.pid }}</span>
+                    <span class="time-marker">{{ block.end }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- RR Table -->
+            <div class="table-responsive" style="margin-top: 1rem;">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Process ID</th>
+                            <th>Request Job Description</th>
+                            <th>Arrival Time (AT)</th>
+                            <th>Burst Time (BT)</th>
+                            <th>Completion Time (CT)</th>
+                            <th>Turnaround Time (TAT)</th>
+                            <th>Waiting Time (WT)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in rr.schedule %}
+                        <tr>
+                            <td><code>{{ p.pid }}</code></td>
+                            <td style="font-weight: 600;">{{ p.title }}</td>
+                            <td>{{ p.at }} ms</td>
+                            <td>{{ p.bt }} ms</td>
+                            <td>{{ p.ct }} ms</td>
+                            <td><strong>{{ p.tat }} ms</strong></td>
+                            <td><strong>{{ p.wt }} ms</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: var(--bg-card-alt); font-weight: 700;">
+                            <td colspan="5" style="text-align: right;">Average Metrics:</td>
+                            <td style="color: var(--primary);">Avg TAT = {{ rr.avg_tat }} ms</td>
+                            <td style="color: var(--success);">Avg WT = {{ rr.avg_wt }} ms</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 2: PROCESS SYNCHRONIZATION & MUTEX (ASHUTOSH KUMAR) -->
+<div class="card" style="border-top: 5px solid var(--primary);">
+    <div class="card-header">
+        <div>
+            <h3 style="color: var(--secondary);">
+                🔒 2. Process Synchronization & Mutex Locking (Ashutosh Kumar)
+            </h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Solving the <strong>Critical Section Problem</strong> on shared hardware resources (e.g. AI GPU Workstation). Prevents race conditions.
+            </p>
+        </div>
+        <span class="badge {% if mutex.is_locked %}badge-danger{% else %}badge-paid{% endif %}" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+            Mutex State: {% if mutex.is_locked %}LOCKED (BUSY){% else %}UNLOCKED (FREE){% endif %}
+        </span>
+    </div>
+
+    <div class="mutex-box {% if mutex.is_locked %}locked{% else %}unlocked{% endif %}">
+        <div>
+            <h4 style="font-size: 1.1rem; color: var(--secondary); margin-bottom: 0.25rem;">
+                Resource: {{ mutex.resource }}
+            </h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">
+                {% if mutex.is_locked %}
+                    🔒 Currently in Critical Section: <strong style="color: var(--danger);">{{ mutex.locked_by }}</strong>
+                {% else %}
+                    🔓 Critical Section is currently IDLE. Available for immediate thread acquisition.
+                {% endif %}
+            </p>
+            {% if mutex.wait_queue %}
+                <p style="font-size: 0.82rem; color: var(--warning); margin-top: 0.35rem;">
+                    ⏳ Blocked Semaphore Queue: {{ mutex.wait_queue|join(', ') }}
+                </p>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <form action="{{ url_for('mutex_acquire') }}" method="POST" style="display:inline;">
+                <input type="hidden" name="user_name" value="Ashutosh (Thread-1)">
+                <input type="hidden" name="proc_id" value="T-01">
+                <button type="submit" class="btn btn-primary btn-sm">Try Acquire (Ashutosh)</button>
+            </form>
+            <form action="{{ url_for('mutex_acquire') }}" method="POST" style="display:inline;">
+                <input type="hidden" name="user_name" value="Krish (Thread-2)">
+                <input type="hidden" name="proc_id" value="T-02">
+                <button type="submit" class="btn btn-secondary btn-sm">Try Acquire (Krish)</button>
+            </form>
+            <form action="{{ url_for('mutex_release') }}" method="POST" style="display:inline;">
+                <button type="submit" class="btn btn-success btn-sm">Release Lock (Signal/V)</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mutex Execution Trace Log -->
+    <div style="background: #0f172a; color: #38bdf8; font-family: monospace; font-size: 0.82rem; padding: 1rem; border-radius: 6px; margin-top: 0.75rem;">
+        <p style="color: #94a3b8; margin-bottom: 0.4rem;">// Kernel Mutex Event Log (Thread Synchronization Trace):</p>
+        {% for log in mutex.logs %}
+            <p>{{ log }}</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- SECTION 3: MEMORY MANAGEMENT & LRU CACHE (SUMAN KUMAR & GOVIND KUMAR) -->
+<div class="card" style="border-top: 5px solid var(--accent-blue);">
+    <div class="card-header">
+        <div>
+            <h3 style="color: var(--secondary);">
+                💾 3. Memory Management & LRU Cache Simulator (Suman Kumar & Govind Kumar)
+            </h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Simulating fast RAM page buffering (Capacity: 4 Frames). Demonstrates <strong>Page Hit</strong> vs <strong>Page Fault (Cache Miss)</strong>.
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="badge badge-paid">Hit Ratio: {{ cache.hit_ratio }}%</span>
+            <span class="badge badge-pending">Hits: {{ cache.hits }}</span>
+            <span class="badge badge-due">Misses: {{ cache.misses }}</span>
+        </div>
+    </div>
+
+    <!-- Current RAM Frames -->
+    <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Current Physical RAM Frames (Capacity: 4 Page Frames):</h4>
+    <div class="cache-frames">
+        {% for i in range(cache.capacity) %}
+            {% if i < cache.current_frames|length %}
+                <div class="cache-frame-slot occupied">
+                    <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Frame #{{ i+1 }}</span>
+                    <h4 style="color: var(--secondary); margin-top: 0.2rem; font-size: 1.05rem;">
+                        <code>{{ cache.current_frames[i] }}</code>
+                    </h4>
+                    <span style="font-size: 0.75rem; color: var(--accent-blue);">In Fast RAM</span>
+                </div>
+            {% else %}
+                <div class="cache-frame-slot">
+                    <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Frame #{{ i+1 }}</span>
+                    <h4 style="color: var(--text-muted); margin-top: 0.2rem; font-size: 1.05rem;">Empty Frame</h4>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Available</span>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Interactive Query Simulation -->
+    <form action="{{ url_for('cache_access') }}" method="POST" style="background: var(--bg-card-alt); padding: 1rem; border-radius: 8px; margin-top: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <label for="cacheStudentSelect" style="font-size: 0.88rem; font-weight: 600;">Simulate Student Profile Access (Query):</label>
+        <select name="roll_no" id="cacheStudentSelect" class="form-control" style="max-width: 320px;" required>
+            {% for st in students %}
+                <option value="{{ st.roll_no }}">{{ st.name }} ({{ st.roll_no }})</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Query Memory & Check Cache &rarr;</button>
+    </form>
+</div>
+
+<!-- SECTION 4: SECURITY & ACCESS CONTROL MATRIX (ASHUTOSH KUMAR) -->
+<div class="card" style="border-top: 5px solid var(--secondary);">
+    <div class="card-header">
+        <div>
+            <h3 style="color: var(--secondary);">
+                🛡️ 4. Operating System Security & Protection Domain Matrix (Ashutosh Kumar)
+            </h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Formal Access Control List (ACL) mapping user privilege levels (User Mode vs Kernel Mode) to ERP resources.
+            </p>
+        </div>
+        <span class="badge badge-paid">Dual-Mode Security Model</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="niet-table">
+            <thead>
+                <tr>
+                    <th>Operating System Resource / Object</th>
+                    <th>Super Administrator (Kernel Mode)</th>
+                    <th>Faculty Member (Supervised Mode)</th>
+                    <th>Student (Restricted User Mode)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in acl %}
+                <tr>
+                    <td style="font-weight: 600;">{{ row.object }}</td>
+                    <td><span class="badge badge-danger">{{ row.admin }}</span></td>
+                    <td><span class="badge badge-pending">{{ row.faculty }}</span></td>
+                    <td><span class="badge badge-paid">{{ row.student }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - {{ student.name }}{% endblock %}
+
+{% block content %}
+<!-- STUDENT PROFILE HEADER CARD -->
+<div class="card" style="border-left: 6px solid var(--primary); padding: 1.5rem 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; box-shadow: var(--shadow-md);">
+                {{ student.name[0] }}
+            </div>
+            <div>
+                <h2 style="font-size: 1.5rem; color: var(--secondary); margin-bottom: 0.2rem;">{{ student.name }}</h2>
+                <div style="display: flex; gap: 0.75rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;">
+                    <span><strong>Roll No:</strong> <code>{{ student.roll_no }}</code></span>
+                    <span>•</span>
+                    <span><strong>Branch:</strong> {{ student.branch }}</span>
+                    <span>•</span>
+                    <span><strong>Semester:</strong> 3 (Section {{ student.section }})</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <span class="badge {% if student.fee_status == 'Paid' %}badge-paid{% else %}badge-due{% endif %}" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                Fee: {{ student.fee_status }}
+            </span>
+            <span class="badge badge-pending" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                CGPA: {{ student.cgpa }}
+            </span>
+            <span class="badge" style="background: #f1f5f9; color: var(--brand-dark); border: 1px solid #cbd5e1; font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                🎓 Regular Student
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- ATTENDANCE OVERVIEW (WITH 75% NIET RULE CHECK) -->
+<div class="card attendance-card">
+    <div class="card-header">
+        <h3>📊 Attendance Tracking & Eligibility Status (NIET 75% Rule)</h3>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">Academic Year: {{ student.academic_year }}</span>
+    </div>
+    
+    <div class="attendance-display">
+        <!-- Circular Progress Meter -->
+        <div class="circle-progress {% if student.overall_attendance < 75.0 %}danger{% endif %}" style="--percent: {{ student.overall_attendance }};">
+            <div class="circle-inner">
+                <span class="percent">{{ student.overall_attendance }}%</span>
+                <span class="label">Total Att.</span>
+            </div>
+        </div>
+
+        <!-- Attendance Status Meta -->
+        <div class="attendance-meta">
+            {% if student.overall_attendance < 75.0 %}
+                <h3 style="color: var(--danger);">⚠️ Attendance Shortage Warning!</h3>
+                <p style="font-size: 0.88rem; color: var(--text-muted);">
+                    Your current attendance of <strong>{{ student.overall_attendance }}%</strong> is strictly below the mandatory <strong>75%</strong> requirement. 
+                    As per NIET examination rules, you are currently at risk of debarment from Sessional-2 & End Semester examinations.
+                </p>
+                <div class="attendance-warning-badge">Action Required: Submit Medical/Leave Request or meet Course Coordinator Mr. Praveen Kr Tomar</div>
+            {% else %}
+                <h3 style="color: var(--success);">✅ Attendance Status: Satisfactory & Eligible</h3>
+                <p style="font-size: 0.88rem; color: var(--text-muted);">
+                    Excellent! Your attendance is <strong>{{ student.overall_attendance }}%</strong>, comfortably above the <strong>75%</strong> threshold.
+                    You are eligible for all internal sessional examinations and university practicals.
+                </p>
+                <div class="attendance-safe-badge">Examination Status: Clear to sit in all examinations</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Subject Wise Breakdown Table -->
+    <div class="table-responsive" style="margin-top: 1.5rem;">
+        <table class="niet-table">
+            <thead>
+                <tr>
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
+                    <th>Faculty</th>
+                    <th>Classes Attended</th>
+                    <th>Total Conducted</th>
+                    <th>Subject %</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for subj in student.subjects %}
+                {% set subj_pct = (subj.attended / subj.total * 100)|round(1) %}
+                <tr>
+                    <td><code>{{ subj.code }}</code></td>
+                    <td style="font-weight: 600;">{{ subj.name }}</td>
+                    <td>{{ subj.faculty }}</td>
+                    <td>{{ subj.attended }}</td>
+                    <td>{{ subj.total }}</td>
+                    <td><strong>{{ subj_pct }}%</strong></td>
+                    <td>
+                        {% if subj_pct >= 75.0 %}
+                            <span class="badge badge-paid">Safe</span>
+                        {% else %}
+                            <span class="badge badge-danger">Shortage</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- TABS NAVIGATION CONTAINER -->
+<div class="tabs-container">
+    <div class="tabs-header">
+        <button class="tab-btn active" data-tab="tabResults">📝 Sessional Marks & Grades</button>
+        <button class="tab-btn" data-tab="tabTimetable">📅 Class Timetable (Sec C)</button>
+        <button class="tab-btn" data-tab="tabFees">💳 Fee Status & Receipt</button>
+        <button class="tab-btn" data-tab="tabLibrary">📚 Central Library</button>
+        <button class="tab-btn" data-tab="tabRequests">📨 Student Applications & Requests</button>
+    </div>
+
+    <!-- TAB 1: RESULTS & MARKS -->
+    <div class="tab-pane active" id="tabResults">
+        <div class="card">
+            <div class="card-header">
+                <h3>Sessional Examination Performance</h3>
+                <span class="badge badge-paid">CGPA: {{ student.cgpa }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Subject Code</th>
+                            <th>Subject Name</th>
+                            <th>Sessional-1 (30)</th>
+                            <th>Sessional-2 (30)</th>
+                            <th>Total (60)</th>
+                            <th>Grade Awarded</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subj in student.subjects %}
+                        {% set total_marks = subj.sessional_1 + subj.sessional_2 %}
+                        <tr>
+                            <td><code>{{ subj.code }}</code></td>
+                            <td style="font-weight: 600;">{{ subj.name }}</td>
+                            <td>{{ subj.sessional_1 }}</td>
+                            <td>{{ subj.sessional_2 }}</td>
+                            <td><strong>{{ total_marks }}</strong> / 60</td>
+                            <td>
+                                {% if total_marks >= 54 %}
+                                    <span class="badge badge-paid">A+ (Outstanding)</span>
+                                {% elif total_marks >= 48 %}
+                                    <span class="badge badge-paid">A (Excellent)</span>
+                                {% elif total_marks >= 40 %}
+                                    <span class="badge badge-pending">B+ (Good)</span>
+                                {% else %}
+                                    <span class="badge badge-due">B (Average)</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: TIMETABLE -->
+    <div class="tab-pane" id="tabTimetable">
+        <div class="card">
+            <div class="card-header">
+                <h3>Weekly Academic Schedule - 3rd Sem B.Tech AI (Batch C)</h3>
+                <span class="badge badge-pending">Semester 3</span>
+            </div>
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>09:30 - 10:30</th>
+                            <th>10:30 - 11:30</th>
+                            <th>11:30 - 12:30</th>
+                            <th>12:30 - 01:30</th>
+                            <th>01:30 - 02:30</th>
+                            <th>02:30 - 03:30</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in timetable %}
+                        <tr>
+                            <td style="font-weight: 700; color: var(--primary);">{{ row.day }}</td>
+                            <td>{{ row.p1 }}</td>
+                            <td>{{ row.p2 }}</td>
+                            <td>{{ row.p3 }}</td>
+                            <td style="background:#f1f5f9; text-align:center; font-style:italic;">Lunch Break</td>
+                            <td>{{ row.p5 }}</td>
+                            <td>{{ row.p6 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: FEES -->
+    <div class="tab-pane" id="tabFees">
+        <div class="card">
+            <div class="card-header">
+                <h3>Semester Fee Summary</h3>
+                <button onclick="openModal('feeReceiptModal')" class="btn btn-sm btn-primary">
+                    🧾 View & Print Official Fee Receipt
+                </button>
+            </div>
+            <div class="stats-grid" style="margin-bottom: 1.25rem;">
+                <div class="stat-box">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <h4>Total Semester Fee</h4>
+                        <p>₹{{ student.fee_amount }}</p>
+                    </div>
+                </div>
+                <div class="stat-box success">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <h4>Amount Deposited</h4>
+                        <p>₹{{ student.fee_paid }}</p>
+                    </div>
+                </div>
+                <div class="stat-box {% if student.fee_status == 'Paid' %}success{% else %}warning{% endif %}">
+                    <div class="stat-icon">⚖️</div>
+                    <div class="stat-info">
+                        <h4>Balance Due</h4>
+                        <p>₹{{ student.fee_amount - student.fee_paid }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: var(--bg-card-alt); padding: 1rem; border-radius: 8px;">
+                <p style="font-size: 0.88rem; margin-bottom: 0.25rem;">
+                    <strong>Transaction Reference:</strong> <code>{{ student.transaction_id }}</code>
+                </p>
+                <p style="font-size: 0.88rem; color: var(--text-muted);">
+                    Status: <span class="badge {% if student.fee_status == 'Paid' %}badge-paid{% else %}badge-due{% endif %}">{{ student.fee_status }}</span>
+                    (Verified by Accounts Department, NIET Greater Noida)
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: LIBRARY -->
+    <div class="tab-pane" id="tabLibrary">
+        <div class="card">
+            <div class="card-header">
+                <h3>Books Issued Under Your Library Card</h3>
+                <span class="badge badge-paid">Active Card</span>
+            </div>
+            {% if student.library_issued %}
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Issue Date</th>
+                            <th>Return Due Date</th>
+                            <th>Late Fine</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in student.library_issued %}
+                        <tr>
+                            <td style="font-weight:600;">{{ b.title }}</td>
+                            <td>{{ b.issue_date }}</td>
+                            <td>{{ b.due_date }}</td>
+                            <td>₹{{ b.fine }}</td>
+                            <td><span class="badge badge-paid">Issued</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color: var(--text-muted); font-size: 0.9rem;">No books currently issued.</p>
+            {% endif %}
+
+            <h4 style="margin: 1.5rem 0 0.75rem 0; font-size: 1rem; color: var(--secondary);">Available Central Library Catalog</h4>
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>ISBN</th>
+                            <th>Book Title</th>
+                            <th>Author(s)</th>
+                            <th>Available Copies</th>
+                            <th>Shelf Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for book in library_books %}
+                        <tr>
+                            <td><code>{{ book.isbn }}</code></td>
+                            <td style="font-weight: 600;">{{ book.title }}</td>
+                            <td>{{ book.author }}</td>
+                            <td><strong>{{ book.copies_available }}</strong> / {{ book.copies_total }}</td>
+                            <td><span class="badge badge-pending">{{ book.shelf }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5: STUDENT APPLICATIONS & REQUESTS -->
+    <div class="tab-pane" id="tabRequests">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3>📨 Student Service Requests & Applications</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                        Submit official applications for Bonafide Certificates, Medical Leaves, and Railway Concession Forms to Academic Administration.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Request Submission Form -->
+            <form action="{{ url_for('submit_student_request') }}" method="POST" style="background: var(--bg-card-alt); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h4 style="font-size: 0.95rem; margin-bottom: 0.85rem; color: var(--secondary);">Submit New Application</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="request_type">Application Type:</label>
+                        <select name="request_type" class="form-control" required>
+                            <option value="Bonafide Certificate">Bonafide Certificate</option>
+                            <option value="Medical Leave Approval">Medical Leave Approval</option>
+                            <option value="Railway Concession Form">Railway Concession Form</option>
+                            <option value="Library Card Re-Issue">Library Card Re-Issue</option>
+                            <option value="Fee Receipt Duplicate">Fee Receipt Duplicate</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reason">Reason / Description:</label>
+                        <input type="text" name="reason" class="form-control" placeholder="Explain the purpose of this application..." required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem;">
+                    Submit Application &rarr;
+                </button>
+            </form>
+
+            <!-- Previous Requests Table -->
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Your Application Status & History</h4>
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Application ID</th>
+                            <th>Request Type</th>
+                            <th>Reason</th>
+                            <th>Submitted Date</th>
+                            <th>Estimated Processing</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in my_requests %}
+                        <tr>
+                            <td><code>{{ req.id }}</code></td>
+                            <td style="font-weight:600;">{{ req.request_type }}</td>
+                            <td style="font-size:0.85rem;">{{ req.reason }}</td>
+                            <td style="font-size:0.82rem; color:var(--text-muted);">{{ req.timestamp }}</td>
+                            <td><span class="badge badge-pending">1-2 Working Days</span></td>
+                            <td>
+                                {% if req.status == 'Approved' %}
+                                    <span class="badge badge-paid">Approved</span>
+                                {% elif req.status == 'Rejected' %}
+                                    <span class="badge badge-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge badge-due">Pending Verification</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FEE RECEIPT MODAL (CLEAN & PRINTABLE) -->
+<div id="feeReceiptModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Official Fee Receipt</h3>
+            <button onclick="closeModal('feeReceiptModal')" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body" id="receiptPrintArea">
+            <div style="text-align: center; border-bottom: 2px solid #8a1324; padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                <h2 style="color: #8a1324; font-size: 1.25rem; font-weight: 800;">NOIDA INSTITUTE OF ENGINEERING AND TECHNOLOGY</h2>
+                <p style="font-size: 0.8rem; color: #475569;">19, Knowledge Park-II, Institutional Area, Greater Noida (U.P.)</p>
+                <span class="badge badge-paid" style="margin-top: 0.5rem;">FEE RECEIPT (SEMESTER 3)</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.85rem; margin-bottom: 1.25rem;">
+                <p><strong>Student Name:</strong> {{ student.name }}</p>
+                <p><strong>Roll Number:</strong> {{ student.roll_no }}</p>
+                <p><strong>Branch:</strong> {{ student.branch }}</p>
+                <p><strong>Academic Year:</strong> {{ student.academic_year }}</p>
+                <p><strong>Transaction ID:</strong> <code>{{ student.transaction_id }}</code></p>
+                <p><strong>Payment Status:</strong> <strong>{{ student.fee_status }}</strong></p>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 1.25rem;">
+                <tr style="background: #f1f5f9;">
+                    <th style="padding: 0.5rem; text-align: left; border: 1px solid #cbd5e1;">Fee Head</th>
+                    <th style="padding: 0.5rem; text-align: right; border: 1px solid #cbd5e1;">Amount (INR)</th>
+                </tr>
+                <tr>
+                    <td style="padding: 0.5rem; border: 1px solid #cbd5e1;">Tuition Fee (3rd Semester)</td>
+                    <td style="padding: 0.5rem; text-align: right; border: 1px solid #cbd5e1;">₹75,000</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.5rem; border: 1px solid #cbd5e1;">University Exam & ERP Maintenance Fee</td>
+                    <td style="padding: 0.5rem; text-align: right; border: 1px solid #cbd5e1;">₹7,500</td>
+                </tr>
+                <tr style="font-weight: bold; background: #f8fafc;">
+                    <td style="padding: 0.5rem; border: 1px solid #cbd5e1;">Total Amount Paid</td>
+                    <td style="padding: 0.5rem; text-align: right; border: 1px solid #cbd5e1; color: #166534;">₹{{ student.fee_paid }}</td>
+                </tr>
+            </table>
+
+            <div style="font-size: 0.75rem; color: #64748b; text-align: right; margin-top: 1.5rem;">
+                <p>Computer-generated E-Receipt • No signature required</p>
+                <p>Authorized by Finance Officer, NIET Greater Noida</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="printReceipt('receiptPrintArea')" class="btn btn-primary">🖨️ Print Receipt</button>
+            <button onclick="closeModal('feeReceiptModal')" class="btn btn-secondary">Close</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

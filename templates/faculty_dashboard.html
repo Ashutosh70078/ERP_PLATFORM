@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Portal - {{ faculty.name }}{% endblock %}
+
+{% block content %}
+<!-- FACULTY PROFILE BANNER -->
+<div class="card" style="border-left: 6px solid var(--secondary); padding: 1.5rem 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--primary)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; box-shadow: var(--shadow-md);">
+                👨‍🏫
+            </div>
+            <div>
+                <h2 style="font-size: 1.5rem; color: var(--secondary); margin-bottom: 0.2rem;">{{ faculty.name }}</h2>
+                <div style="display: flex; gap: 0.75rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;">
+                    <span><strong>Designation:</strong> {{ faculty.designation }}</span>
+                    <span>•</span>
+                    <span><strong>Subject:</strong> {{ faculty.subject_assigned }}</span>
+                    <span>•</span>
+                    <span><strong>Dept:</strong> {{ faculty.department }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="badge badge-paid" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Course Coordinator</span>
+            <span class="badge badge-pending" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Assigned: Batch C & D</span>
+        </div>
+    </div>
+</div>
+
+<!-- TABS CONTAINER -->
+<div class="tabs-container">
+    <div class="tabs-header">
+        <button class="tab-btn active" data-tab="tabAttendance">📋 Mark Batch Attendance</button>
+        <button class="tab-btn" data-tab="tabMarks">📝 Enter Sessional Marks</button>
+        <button class="tab-btn" data-tab="tabShortage">⚠️ Attendance Shortage List (<75%)</button>
+        <button class="tab-btn" data-tab="tabSchedule">📅 Lecture Schedule</button>
+    </div>
+
+    <!-- TAB 1: MARK ATTENDANCE -->
+    <div class="tab-pane active" id="tabAttendance">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3>Operating Systems (CCSE0353A) - Batch C Attendance Register</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-muted);">One-click toggle to mark Present or Absent for current lecture</p>
+                </div>
+                <input type="text" class="table-search-input form-control" data-target-table="attendanceTable" placeholder="🔍 Search student name or roll..." style="max-width: 250px;">
+            </div>
+
+            <div class="table-responsive">
+                <table class="niet-table" id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Current Attended / Total</th>
+                            <th>Overall Attendance</th>
+                            <th>Status Badge</th>
+                            <th>Action (Mark Today)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for st in students %}
+                        <tr>
+                            <td><code>{{ st.roll_no }}</code></td>
+                            <td style="font-weight: 600;">{{ st.name }}</td>
+                            <td>
+                                {% for subj in st.subjects %}
+                                    {% if subj.code == 'CCSE0353A' %}
+                                        <strong>{{ subj.attended }}</strong> / {{ subj.total }} classes
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td><strong>{{ st.overall_attendance }}%</strong></td>
+                            <td>
+                                {% if st.overall_attendance >= 75.0 %}
+                                    <span class="badge badge-paid">Eligible (≥75%)</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Shortage (<75%)</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.4rem;">
+                                    <form action="{{ url_for('faculty_mark_attendance') }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="roll_no" value="{{ st.roll_no }}">
+                                        <input type="hidden" name="status" value="Present">
+                                        <button type="submit" class="btn btn-sm btn-success">✅ Present</button>
+                                    </form>
+                                    <form action="{{ url_for('faculty_mark_attendance') }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="roll_no" value="{{ st.roll_no }}">
+                                        <input type="hidden" name="status" value="Absent">
+                                        <button type="submit" class="btn btn-sm btn-danger">❌ Absent</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: ENTER SESSIONAL MARKS -->
+    <div class="tab-pane" id="tabMarks">
+        <div class="card">
+            <div class="card-header">
+                <h3>Sessional Examination Marks Entry - Operating Systems (CCSE0353A)</h3>
+                <span class="badge badge-pending">Max Marks: 30 each</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Sessional-1 (30)</th>
+                            <th>Sessional-2 (30)</th>
+                            <th>Total (60)</th>
+                            <th>Update Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for st in students %}
+                        {% for subj in st.subjects %}
+                        {% if subj.code == 'CCSE0353A' %}
+                        <tr>
+                            <form action="{{ url_for('faculty_update_marks') }}" method="POST">
+                                <input type="hidden" name="roll_no" value="{{ st.roll_no }}">
+                                <input type="hidden" name="subject_code" value="CCSE0353A">
+                                <td><code>{{ st.roll_no }}</code></td>
+                                <td style="font-weight: 600;">{{ st.name }}</td>
+                                <td>
+                                    <input type="number" name="sessional_1" value="{{ subj.sessional_1 }}" min="0" max="30" class="form-control" style="width: 80px;" required>
+                                </td>
+                                <td>
+                                    <input type="number" name="sessional_2" value="{{ subj.sessional_2 }}" min="0" max="30" class="form-control" style="width: 80px;" required>
+                                </td>
+                                <td>
+                                    <strong>{{ subj.sessional_1 + subj.sessional_2 }}</strong> / 60
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-sm btn-primary">💾 Save Marks</button>
+                                </td>
+                            </form>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: SHORTAGE NOTICE LIST (<75%) -->
+    <div class="tab-pane" id="tabShortage">
+        <div class="card" style="border-left: 5px solid var(--danger);">
+            <div class="card-header">
+                <h3 style="color: var(--danger);">⚠️ Students With Critical Attendance Shortage (<75%)</h3>
+                <span class="badge badge-danger">Official Debarment Risk</span>
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">
+                As Course Coordinator, please review students with attendance below 75%. Notice should be issued prior to Sessional-2 exam lock.
+            </p>
+
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Overall Attendance</th>
+                            <th>Deficit from 75%</th>
+                            <th>Status & Recommendation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for st in students %}
+                        {% if st.overall_attendance < 75.0 %}
+                        <tr style="background: #fff5f5;">
+                            <td><code>{{ st.roll_no }}</code></td>
+                            <td style="font-weight: 700; color: var(--danger);">{{ st.name }}</td>
+                            <td><strong style="color: var(--danger);">{{ st.overall_attendance }}%</strong></td>
+                            <td><span class="badge badge-danger">-{{ (75.0 - st.overall_attendance)|round(1) }}% deficit</span></td>
+                            <td>
+                                Issue official warning letter or ask student to submit medical certificate to HOD office.
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: LECTURE SCHEDULE -->
+    <div class="tab-pane" id="tabSchedule">
+        <div class="card">
+            <div class="card-header">
+                <h3>Weekly Teaching Schedule - {{ faculty.name }}</h3>
+                <span class="badge badge-paid">Active Semester</span>
+            </div>
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Time Slot</th>
+                            <th>Classroom / Lab</th>
+                            <th>Subject / Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for slot in faculty.schedule %}
+                        <tr>
+                            <td style="font-weight: 700; color: var(--primary);">{{ slot.day }}</td>
+                            <td>{{ slot.time }}</td>
+                            <td><span class="badge badge-pending">{{ slot.room }}</span></td>
+                            <td style="font-weight: 600;">{{ slot.subject }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

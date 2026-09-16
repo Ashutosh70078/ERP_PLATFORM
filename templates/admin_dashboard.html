@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Console - NIET Smart ERP{% endblock %}
+
+{% block content %}
+<!-- ADMIN HEADER WITH KPI CARDS -->
+<div class="card" style="border-left: 6px solid var(--primary); padding: 1.5rem 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 style="font-size: 1.5rem; color: var(--secondary); margin-bottom: 0.2rem;">🏛️ Super Administrator Console</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">
+                Campus Management, User Provisioning, Notice Publishing & Student Requests
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+            <button onclick="openModal('addStudentModal')" class="btn btn-primary">
+                ➕ Add New Student
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- SYSTEM OVERVIEW STATS -->
+<div class="stats-grid">
+    <div class="stat-box">
+        <div class="stat-icon">👨‍🎓</div>
+        <div class="stat-info">
+            <h4>Total Enrolled Students</h4>
+            <p>{{ stats.total_students }}</p>
+        </div>
+    </div>
+    <div class="stat-box success">
+        <div class="stat-icon">📈</div>
+        <div class="stat-info">
+            <h4>Average Attendance</h4>
+            <p>{{ stats.avg_attendance }}%</p>
+        </div>
+    </div>
+    <div class="stat-box warning">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-info">
+            <h4>Attendance Shortages</h4>
+            <p>{{ stats.attendance_shortage_count }}</p>
+        </div>
+    </div>
+    <div class="stat-box blue">
+        <div class="stat-icon">📨</div>
+        <div class="stat-info">
+            <h4>Pending Service Requests</h4>
+            <p>{{ stats.pending_requests_count }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- TABS NAVIGATION -->
+<div class="tabs-container">
+    <div class="tabs-header">
+        <button class="tab-btn active" data-tab="tabAdminStudents">👥 Student Directory & Records</button>
+        <button class="tab-btn" data-tab="tabAdminRequests">📨 Student Service Requests (Queue)</button>
+        <button class="tab-btn" data-tab="tabAdminNotices">📢 Campus Notices & Circulars</button>
+    </div>
+
+    <!-- TAB 1: STUDENT DIRECTORY -->
+    <div class="tab-pane active" id="tabAdminStudents">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3>Enrolled Students Master Database</h3>
+                    <p style="font-size:0.82rem; color:var(--text-muted);">View, search, add, or delete student profiles</p>
+                </div>
+                <input type="text" class="table-search-input form-control" data-target-table="adminStudentTable" placeholder="🔍 Search by name or roll..." style="max-width: 250px;">
+            </div>
+
+            <div class="table-responsive">
+                <table class="niet-table" id="adminStudentTable">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Branch & Sem</th>
+                            <th>Attendance</th>
+                            <th>CGPA</th>
+                            <th>Fee Status</th>
+                            <th>Project Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for st in students %}
+                        <tr>
+                            <td><code>{{ st.roll_no }}</code></td>
+                            <td style="font-weight: 600;">{{ st.name }}</td>
+                            <td>{{ st.branch }} (Sem {{ st.semester }})</td>
+                            <td>
+                                <strong>{{ st.overall_attendance }}%</strong>
+                                {% if st.overall_attendance < 75.0 %}
+                                    <span class="badge badge-danger">Shortage</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ st.cgpa }}</td>
+                            <td>
+                                <span class="badge {% if st.fee_status == 'Paid' %}badge-paid{% else %}badge-due{% endif %}">
+                                    {{ st.fee_status }}
+                                </span>
+                            </td>
+                            <td style="font-size: 0.8rem; color: var(--text-muted);">{{ st.role_in_project }}</td>
+                            <td>
+                                <form action="{{ url_for('admin_delete_student', roll_no=st.roll_no) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete student {{ st.name }}?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SERVICE APPLICATION APPROVALS -->
+    <div class="tab-pane" id="tabAdminRequests">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3>Student Applications & Approvals</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-muted);">Review and approve student service applications (Bonafide, Leave, Concessions)</p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Req ID</th>
+                            <th>Roll No</th>
+                            <th>Student Name</th>
+                            <th>Request Type</th>
+                            <th>Reason</th>
+                            <th>Submitted At</th>
+                            <th>Status</th>
+                            <th>Decision Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in requests %}
+                        <tr>
+                            <td><code>{{ req.id }}</code></td>
+                            <td><code>{{ req.roll_no }}</code></td>
+                            <td style="font-weight: 600;">{{ req.student_name }}</td>
+                            <td>{{ req.request_type }}</td>
+                            <td style="font-size: 0.85rem;">{{ req.reason }}</td>
+                            <td style="font-size: 0.82rem; color: var(--text-muted);">{{ req.timestamp }}</td>
+                            <td>
+                                {% if req.status == 'Approved' %}
+                                    <span class="badge badge-paid">Approved</span>
+                                {% elif req.status == 'Rejected' %}
+                                    <span class="badge badge-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge badge-due">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if req.status == 'Pending' %}
+                                    <div style="display: flex; gap: 0.4rem;">
+                                        <form action="{{ url_for('admin_request_action', req_id=req.id, action='approve') }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                        </form>
+                                        <form action="{{ url_for('admin_request_action', req_id=req.id, action='reject') }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <span style="font-size: 0.82rem; color: var(--text-muted);">Completed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: CAMPUS NOTICES -->
+    <div class="tab-pane" id="tabAdminNotices">
+        <div class="card">
+            <div class="card-header">
+                <h3>Publish New Campus Circular</h3>
+            </div>
+            <form action="{{ url_for('admin_add_notice') }}" method="POST" style="background: var(--bg-card-alt); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <div class="form-row">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="title">Notice Title:</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. Schedule for PBL Capstone Review" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category:</label>
+                        <select name="category" class="form-control">
+                            <option value="Academic">Academic</option>
+                            <option value="Examination">Examination</option>
+                            <option value="Library">Library</option>
+                            <option value="Events">Events</option>
+                            <option value="Important">Important</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="content">Notice Content / Instructions:</label>
+                    <textarea name="content" class="form-control" rows="3" placeholder="Provide full details of circular..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">📢 Publish to College Board</button>
+            </form>
+
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Current Published Notices</h4>
+            <div class="table-responsive">
+                <table class="niet-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Title</th>
+                            <th>Content</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notices %}
+                        <tr>
+                            <td>{{ n.date }}</td>
+                            <td><span class="badge badge-pending">{{ n.category }}</span></td>
+                            <td style="font-weight: 600;">{{ n.title }}</td>
+                            <td style="font-size: 0.85rem; color: var(--text-muted);">{{ n.content }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADD STUDENT MODAL -->
+<div id="addStudentModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Add New Student Record</h3>
+            <button onclick="closeModal('addStudentModal')" class="modal-close-btn">&times;</button>
+        </div>
+        <form action="{{ url_for('admin_add_student') }}" method="POST">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="roll_no">Roll Number / ERP ID:</label>
+                        <input type="text" name="roll_no" class="form-control" placeholder="e.g. 0261dcsa099" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Student Full Name:</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Rahul Sharma" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="branch">Branch:</label>
+                        <input type="text" name="branch" class="form-control" value="B.Tech CSE (AI)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="section">Section:</label>
+                        <input type="text" name="section" class="form-control" value="C" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="attendance">Initial Attendance (%):</label>
+                        <input type="number" step="0.1" name="attendance" class="form-control" value="85.0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cgpa">CGPA:</label>
+                        <input type="number" step="0.01" name="cgpa" class="form-control" value="8.50" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fee_status">Fee Status:</label>
+                        <select name="fee_status" class="form-control">
+                            <option value="Paid">Paid</option>
+                            <option value="Due">Due</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="role_in_project">Project Role (Optional):</label>
+                        <input type="text" name="role_in_project" class="form-control" value="Student Scholar">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Save Student</button>
+                <button type="button" onclick="closeModal('addStudentModal')" class="btn btn-secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
